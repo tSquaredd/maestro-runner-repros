@@ -5,10 +5,11 @@ minimal Compose app screen, a flow that shows it, a side-by-side video and a fix
 
 | Bug | Flow | Video | Fix |
 |---|---|---|---|
-| `launchApp: clearState` sometimes loses its launch: Android kills the new process | [`flows/clear-state.yaml`](flows/clear-state.yaml) | [`videos/clear-state.mp4`](videos/clear-state.mp4) | branch [`fix/android-clearstate-launch-race`](https://github.com/tSquaredd/maestro-runner/tree/fix/android-clearstate-launch-race) |
+| `launchApp: clearState` sometimes loses its launch: Android kills the new process | [`flows/clear-state.yaml`](flows/clear-state.yaml), [`flows/clear-state-over-dialog.yaml`](flows/clear-state-over-dialog.yaml) | [`videos/clear-state.mp4`](videos/clear-state.mp4), [`videos/clear-state-over-dialog.mp4`](videos/clear-state-over-dialog.mp4) | branch [`fix/android-clearstate-launch-race`](https://github.com/tSquaredd/maestro-runner/tree/fix/android-clearstate-launch-race) |
 | `scrollUntilVisible` stops on a row that hangs past its scroll container, and the tap misses | [`flows/scroll-past-container.yaml`](flows/scroll-past-container.yaml) | [`videos/scroll-past-container.mp4`](videos/scroll-past-container.mp4) | branch [`fix/scroll-past-container`](https://github.com/tSquaredd/maestro-runner/tree/fix/scroll-past-container) |
 
 Both turned up in a real app's release-gate tests on a CI emulator. The app here has nothing else in it.
+The videos show 1.1.29 on the left and the fix on the right.
 
 ## Setup
 
@@ -63,9 +64,31 @@ launches all happened to survive.
 A force-stop just before the clear isn't enough: the clear still hit the timeout in 7 of 8 tries, because
 the windows were still closing.
 
-**The fix** force-stops the app and waits until its activities and windows are gone before clearing it,
-for `launchApp: clearState` and `clearState`, on the DeviceLab and UIAutomator2 drivers. With it, the flow
-passes 20 of 20 with no `Destroy timeout` at all.
+### Over the permission dialog
+
+[`flows/clear-state-over-dialog.yaml`](flows/clear-state-over-dialog.yaml) opens Android's permission dialog,
+then runs `launchApp: clearState`, 10 times. The dialog's activity sits in the app's task, so the force-stop
+leaves that task in place, and the clear removes it, and kills, only after `pm clear` has returned. There is
+no timeout this time; the kill lands about 60 ms after the launch:
+
+```
+09:51:38.510 I/ActivityManager: Force stopping com.example.maestrorunnerrepros appid=10192 user=0: clear data
+09:51:38.533 I/ActivityManager: Force stopping com.example.maestrorunnerrepros appid=10192 user=-1: clearApplicationUserData
+09:51:38.654 I/ActivityTaskManager: START u0 {act=android.intent.action.MAIN … pkg=com.example.maestrorunnerrepros …}
+09:51:38.716 I/ActivityManager: Killing 17888:com.example.maestrorunnerrepros/u0a192 (adj -10000): remove task
+```
+
+1.1.29 failed this flow in 3 of 3 runs.
+
+### The fix
+
+Before clearing, it force-stops the app and waits until the app's activities and windows are gone, so
+Android has nothing to wait for. After clearing, it waits until the app's task is gone, so the launch can't
+land before the kill. Both waits poll `dumpsys`, end within a poll or two, and give up with a warning after
+a few seconds. This covers `launchApp: clearState` and `clearState`, on the DeviceLab and UIAutomator2
+drivers. With it, `clear-state.yaml` passes 20 of 20 with no `Destroy timeout` at all, and
+`clear-state-over-dialog.yaml` passes 10 of 10. Without the second wait, the dialog flow still failed 2 of 3
+runs.
 
 ## 2. `scrollUntilVisible` stops on a row past its scroll container
 
@@ -98,7 +121,7 @@ row flush with its container's edge, and this one runs 63 px past it. A `ModalBo
 `LazyColumn` kept clear of the navigation bar with `navigationBarsPadding()` reports its rows this way; the
 same list on a plain screen is clipped to the list (the home screen's other two buttons show it).
 
-**The fix** also measures the row against its scroll container, and scrolls on until the container shows
-it. If the list can't scroll further, the row is accepted as before, so no flow that passes today can
-fail. With it, the flow scrolls the row in (bounds `[63,1959][1017,2274]`) and the dialog opens.
-DeviceLab, UIAutomator2 and Appium drivers.
+**The fix** also measures a match against its scroll container's leading edge, the edge the scroll moves
+towards, and scrolls on until the container shows it. A match the list can't move is accepted after one
+scroll, as #164 does for a sliver. With it, the flow scrolls the row in (bounds `[63,1959][1017,2274]`)
+and the dialog opens. DeviceLab, UIAutomator2 and Appium on Android.

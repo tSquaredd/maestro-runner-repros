@@ -1,0 +1,23 @@
+# launchApp: clearState while Android's permission dialog is open over the app, 10 times in a row.
+# The dialog's activity sits in the app's task, so the clear removes that task, and kills the app's
+# processes, only after it has returned. Each launch should show the home screen.
+appId: com.example.maestrorunnerrepros
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: unset
+- repeat:
+    times: 10
+    commands:
+      - tapOn: { id: "home.requestPermission" }
+      - extendedWaitUntil:
+          visible: { id: "com.android.permissioncontroller:id/permission_allow_button" }
+          timeout: 10000
+      - launchApp:
+          clearState: true
+          permissions:
+            all: unset
+      - extendedWaitUntil:
+          visible: { id: "home.title" }
+          timeout: 10000

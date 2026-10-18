@@ -1,6 +1,9 @@
 package com.example.maestrorunnerrepros
 
+import android.Manifest
 import android.os.Bundle
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -78,6 +81,11 @@ private fun HomeScreen(onOpen: (String) -> Unit) {
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
     Text("Maestro runner repros", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.testTag("home.title"))
+    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    Button(
+      onClick = { askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS) },
+      modifier = Modifier.testTag("home.requestPermission"),
+    ) { Text("Ask for a permission") }
     Button(onClick = { onOpen("sheet") }, modifier = Modifier.testTag("home.openSheetRepro")) { Text("Scroll repro: bottom sheet") }
     Button(onClick = { onOpen("lazy") }, modifier = Modifier.testTag("home.openLazyRepro")) { Text("Scroll repro: LazyColumn") }
     Button(onClick = { onOpen("column") }, modifier = Modifier.testTag("home.openColumnRepro")) { Text("Scroll repro: Column") }
