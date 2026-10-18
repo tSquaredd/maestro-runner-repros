@@ -1,0 +1,14 @@
+# The list's last row, Delete, starts 40 dp above the list's bottom edge and runs 80 dp past it,
+# behind a bottom bar. scrollUntilVisible should scroll it into the list before the tap; a tap on
+# the row where it starts lands on the bar, and the Deleted dialog never shows.
+appId: com.example.maestrorunnerrepros
+---
+- launchApp
+- tapOn: { id: "home.openSheetRepro" }
+- scrollUntilVisible:
+    element: { id: "repro.deleteButton" }
+    direction: DOWN
+- tapOn: { id: "repro.deleteButton" }
+- extendedWaitUntil:
+    visible: { id: "repro.deletedDialog" }
+    timeout: 5000

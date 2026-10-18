@@ -1,0 +1,16 @@
+# launchApp: clearState while the app is on screen, 20 times in a row. Each launch should show the
+# home screen. When Android's "Destroy timeout of remove-task" kills a launch, the wait fails.
+appId: com.example.maestrorunnerrepros
+---
+- launchApp
+- extendedWaitUntil:
+    visible: { id: "home.title" }
+    timeout: 10000
+- repeat:
+    times: 20
+    commands:
+      - launchApp:
+          clearState: true
+      - extendedWaitUntil:
+          visible: { id: "home.title" }
+          timeout: 10000
