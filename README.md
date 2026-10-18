@@ -5,8 +5,8 @@ minimal Compose app screen, a flow that shows it, a side-by-side video and a fix
 
 | Bug | Flow | Video | Fix |
 |---|---|---|---|
-| `launchApp: clearState` sometimes loses its launch: Android kills the new process | [`flows/clear-state.yaml`](flows/clear-state.yaml), [`flows/clear-state-over-dialog.yaml`](flows/clear-state-over-dialog.yaml) | [`videos/clear-state.mp4`](videos/clear-state.mp4), [`videos/clear-state-over-dialog.mp4`](videos/clear-state-over-dialog.mp4) | branch [`fix/android-clearstate-launch-race`](https://github.com/tSquaredd/maestro-runner/tree/fix/android-clearstate-launch-race) |
-| `scrollUntilVisible` stops on a row that hangs past its scroll container, and the tap misses | [`flows/scroll-past-container.yaml`](flows/scroll-past-container.yaml) | [`videos/scroll-past-container.mp4`](videos/scroll-past-container.mp4) | branch [`fix/scroll-past-container`](https://github.com/tSquaredd/maestro-runner/tree/fix/scroll-past-container) |
+| `launchApp: clearState` sometimes loses its launch: Android kills the new process | [`flows/clear-state.yaml`](flows/clear-state.yaml), [`flows/clear-state-over-dialog.yaml`](flows/clear-state-over-dialog.yaml) | [`videos/clear-state.mp4`](videos/clear-state.mp4), [`videos/clear-state-over-dialog.mp4`](videos/clear-state-over-dialog.mp4) | [#225](https://github.com/devicelab-dev/maestro-runner/pull/225), merged in [#228](https://github.com/devicelab-dev/maestro-runner/pull/228) |
+| `scrollUntilVisible` stops on a row that hangs past its scroll container, and the tap misses | [`flows/scroll-past-container.yaml`](flows/scroll-past-container.yaml) | [`videos/scroll-past-container.mp4`](videos/scroll-past-container.mp4) | [#227](https://github.com/devicelab-dev/maestro-runner/pull/227), merged in [#228](https://github.com/devicelab-dev/maestro-runner/pull/228) |
 
 Both turned up in a real app's release-gate tests on a CI emulator. The app here has nothing else in it.
 The videos show 1.1.29 on the left and the fix on the right.
@@ -31,8 +31,9 @@ SHOW_POINTER=1 scripts/run-repro.sh <maestro-runner binary> flows/scroll-past-co
 
 It saves the screen recording, maestro-runner's output, and the app's process lifecycle from logcat.
 
-To run a fix, build its branch: `go build -o maestro-runner-fix .` in a clone of
-`tSquaredd/maestro-runner`, then run it with `MAESTRO_RUNNER_HOME=<the clone>` so it finds `drivers/`.
+Both fixes are in maestro-runner's `main` (through #228). To run them before a release includes them,
+build `main`: `go build -o maestro-runner-main .` in a clone of `devicelab-dev/maestro-runner`, then run it
+with `MAESTRO_RUNNER_HOME=<the clone>` so it finds `drivers/`.
 
 ## 1. `launchApp: clearState` loses its launch
 
